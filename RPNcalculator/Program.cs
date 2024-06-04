@@ -19,8 +19,8 @@ namespace LabWork
             Console.Write("Введите математическое выражение: ");
             string expression = Console.ReadLine();
             expression = expression.Replace(" ", string.Empty);
-
-            Console.WriteLine("Результат: " + RPNCalculator.Calculator(expression));
+            RPNCalculator calculator = new RPNCalculator(expression);
+            Console.WriteLine("Результат: " + calculator);
             Console.ReadKey();
         }
     }

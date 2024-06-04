@@ -1,24 +1,28 @@
 ﻿namespace RPN_Logic
 {
-    abstract class Token
+    public abstract class Token
     {
 
     }
     class Number : Token
     {
-        public float Value { get; }
+        public double Value { get; }
+        public char Variable { get; }
 
-        public Number(float value)
+        public Number(double value)
         {
             Value = value;
         }
-
-        public override string ToString()
+        public Number(char variable)
         {
-            return Value.ToString();
+            Variable = variable;
+        }
+
+        public static bool CheckVariable(char variable)
+        {
+            return variable is 'x' or 'X' or 'х' or 'Х';
         }
     }
-
     class Operation : Token
     {
         public char Symbol;
@@ -48,132 +52,130 @@
             return Symbol.ToString();
         }
     }
-
-    class Parenthesis : Token
+    class Paranthesis(char symbol) : Token
     {
-        public char Symbol;
-        public bool IsClosing;
-        public Parenthesis(char symbol)
-        {
-            if (symbol != '(' && symbol != ')')
-            {
-                throw new ArgumentException("This is not valid ...");
-            }
-
-            IsClosing = symbol == ')';
-            Symbol = symbol;
-        }
-        public override string ToString()
-        {
-            return Symbol.ToString();
-        }
+        public bool IsClosing { get; } = symbol == ')';
     }
-
     class GetToken
     {
         public static List<Token> Gettoken(string expression)
         {
             List<Token> tokens = new List<Token>();
-            string num = string.Empty;
-            for (int i = 0; i < expression.Length; i++)
+            string number = string.Empty;
+            foreach (var c in expression)
             {
-                if (char.IsDigit(expression[i]) || expression[i] == ',' || expression[i] == '.')
+                if (char.IsDigit(c))
                 {
-                    num += expression[i];
+                    number += c;
                 }
-                else if (expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/')
+                else if (c == ',' || c == '.')
                 {
-                    if (num != string.Empty)
-                    {
-                        tokens.Add(new Number(float.Parse(num)));
-                        num = string.Empty;
-                    }
-                    tokens.Add(new Operation(expression[i]));
+                    number += ",";
                 }
-                else if (expression[i] == '(' || expression[i] == ')')
+                else if (c == '+' || c == '-' || c == '*' || c == '/')
                 {
-                    if (num != string.Empty)
+                    if (number != string.Empty)
                     {
-                        tokens.Add(new Number(float.Parse(num)));
-                        num = string.Empty;
+                        tokens.Add(new Number(double.Parse(number)));
+                        number = string.Empty;
                     }
-                    tokens.Add(new Parenthesis(expression[i]));
+                    tokens.Add(new Operation(c));
+                }
+                else if (c == '(' || c == ')')
+                {
+                    if (number != string.Empty)
+                    {
+                        tokens.Add(new Number(double.Parse(number)));
+                        number = string.Empty;
+                    }
+                    tokens.Add(new Paranthesis(c));
+                }
+                else if (Number.CheckVariable(c))
+                {
+                    tokens.Add(new Number(c));
                 }
             }
-            if (num != string.Empty)
+
+            if (number != string.Empty)
             {
-                tokens.Add(new Number(float.Parse(num)));
+                tokens.Add(new Number(double.Parse(number)));
             }
+
             return tokens;
         }
-    }
 
+    }
     class ReversePolishNotation
     {
         public static List<Token> PRN(List<Token> tokens)
         {
-            List<Token> prn = new List<Token>();
-            Stack<Token> stack = new Stack<Token>();
+            List<Token> rpn = new List<Token>();
+            Stack<Token> operators = new Stack<Token>();
+
             foreach (Token token in tokens)
             {
-                if (stack.Count == 0 && !(token is Number))
+                if (operators.Count == 0 && token is not Number)
                 {
-                    stack.Push(token);
+                    operators.Push(token);
                     continue;
                 }
+
                 if (token is Operation)
                 {
-                    if (stack.Peek() is Parenthesis)
+                    if (operators.Peek() is Paranthesis)
                     {
-                        stack.Push(token);
+                        operators.Push(token);
                         continue;
                     }
 
-                    Operation oper = (Operation)token;
-                    Operation oper2 = (Operation)stack.Peek();
-                    if (oper.Priorety > oper2.Priorety)
+                    Operation first = (Operation)token;
+                    Operation second = (Operation)operators.Peek();
+
+                    if (first.Priorety > second.Priorety)
                     {
-                        stack.Push(token);
+                        operators.Push(token);
                     }
-                    else if (oper.Priorety <= oper2.Priorety)
+                    else if (first.Priorety <= second.Priorety)
                     {
-                        while (stack.Count > 0 && !(token is Parenthesis))
+                        while (operators.Count > 0 && token is not Paranthesis)
                         {
-                            prn.Add(stack.Pop());
+                            rpn.Add(operators.Pop());
                         }
-                        stack.Push(token);
+                        operators.Push(token);
                     }
                 }
-                else if (token is Parenthesis)
+                else if (token is Paranthesis paranthesis)
                 {
-                    if (((Parenthesis)token).IsClosing)
+                    if (paranthesis.IsClosing)
                     {
-                        while (!(stack.Peek() is Parenthesis))
+                        while (operators.Peek() is not Paranthesis)
                         {
-                            prn.Add(stack.Pop());
+                            rpn.Add(operators.Pop());
                         }
-                        stack.Pop();
+
+                        operators.Pop();
                     }
                     else
                     {
-                        stack.Push(token);
+                        operators.Push(paranthesis);
                     }
                 }
-                else if (token is Number)
+                else if (token is Number num)
                 {
-                    prn.Add(token);
+                    rpn.Add(num);
                 }
             }
-            while (stack.Count > 0)
+
+            while (operators.Count > 0)
             {
-                prn.Add(stack.Pop());
+                rpn.Add(operators.Pop());
             }
-            return prn;
+            return rpn;
         }
 
-        public static float EvaluateRPN(List<Token> tokens)
+        public static double EvaluateRPN(List<Token> tokens)
         {
-            Stack<float> stack = new Stack<float>();
+            Stack<double> stack = new Stack<double>();
 
             foreach (Token token in tokens)
             {
@@ -189,8 +191,8 @@
                     {
                         throw new InvalidOperationException("Invalid expression");
                     }
-                    float b = stack.Pop();
-                    float a = stack.Pop();
+                    double b = stack.Pop();
+                    double a = stack.Pop();
 
                     switch (op.Symbol)
                     {
@@ -218,14 +220,78 @@
             return stack.Pop();
         }
     }
-
     public class RPNCalculator
     {
-        public static float Calculator(string expression)
+        public readonly double Result;
+        public readonly List<Token> Rpn;
+        public RPNCalculator(string expression)
         {
-            List<Token> tokens = GetToken.Gettoken(expression);
-            List<Token> rpn = ReversePolishNotation.PRN(tokens);
-            float result = ReversePolishNotation.EvaluateRPN(rpn);
+            Rpn = ReversePolishNotation.PRN(GetToken.Gettoken(expression));
+            Result = CalculateWithoutX(Rpn);
+        }
+        public RPNCalculator(string expression, double variable)
+        {
+            List<Token> rpn = ReversePolishNotation.PRN(GetToken.Gettoken(expression));
+            Result = CalculateWithX(rpn, variable);
+        }
+        private static double CalculateWithoutX(List<Token> rpnCalc)
+        {
+            Stack<double> tempCalc = new Stack<double>();
+
+            foreach (Token token in rpnCalc)
+            {
+                if (token is Number num)
+                {
+                    tempCalc.Push(num.Value);
+                }
+                else if (token is Operation)
+                {
+                    double first = tempCalc.Pop();
+                    double second = tempCalc.Pop();
+                    var op = (Operation)token;
+                    double result = CalculateOperation(first, second, op.Symbol);
+                    tempCalc.Push(result);
+                }
+            }
+
+            return tempCalc.Peek();
+        }
+
+        public double CalculateWithX(List<Token> rpnCalc, double variable)
+        {
+            Stack<double> tempCalc = new Stack<double>();
+
+            foreach (Token token in rpnCalc)
+            {
+                if (token is Number num)
+                {
+                    tempCalc.Push(Number.CheckVariable(num.Variable) ? variable : num.Variable);
+                }
+                else if (token is Operation)
+                {
+                    double first = tempCalc.Pop();
+                    double second = tempCalc.Pop();
+                    var op = (Operation)token;
+                    double result = CalculateOperation(first, second, op.Symbol);
+                    tempCalc.Push(result);
+                }
+            }
+
+            return tempCalc.Peek();
+        }
+
+        private static double CalculateOperation(double first, double second, char operation)
+        {
+            double result = 0;
+
+            switch (operation)
+            {
+                case '+': result = first + second; break;
+                case '-': result = second - first; break;
+                case '*': result = first * second; break;
+                case '/': result = second / first; break;
+            }
+
             return result;
         }
     }

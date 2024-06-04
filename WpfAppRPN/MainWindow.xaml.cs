@@ -1,18 +1,15 @@
-﻿using System.Text;
+﻿using RPN_Logic;
+using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using RPN_Logic;
-
 
 namespace WpfAppRPN
 {
+    class Point(double x, double y)
+    {
+        public readonly double X = x;
+        public readonly double Y = y;
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -23,25 +20,45 @@ namespace WpfAppRPN
             InitializeComponent();
         }
 
-        private void btnCalculate_Click(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                double xValue = double.Parse(tbVariable.Text);
-                string expression = tbExpression.Text;
-                expression = expression.Replace("x", xValue.ToString());
-                expression = expression.Replace(" ", string.Empty);
-
-                float result = RPNCalculator.Calculator(expression);
-
-                tbResult.Text = result.ToString();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Invalid expression.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                tbResult.Foreground = Brushes.Red;
-            }
+            CanvasGraph.Children.Clear();
+            DrawCanvas();
         }
 
+        private void DrawCanvas()
+        {
+            string input = txtboxInput.Text;
+            double start = double.Parse(txtboxStart.Text);
+            double end = double.Parse(txtboxEnd.Text);
+            double scale = double.Parse(txtboxScale.Text, NumberStyles.Any, CultureInfo.InvariantCulture);
+            double step = double.Parse(txtboxStep.Text);
+
+            var canvasGraph = CanvasGraph;
+
+            var print = new Printer(canvasGraph, start, end, step, scale);
+            print.DrawAxis();
+
+      
+
+            var calculator = new RPNCalculator(input);
+            List<Point> pointsChart = [];
+
+            for (double x = start; x <= end; x += step / 50)
+            {
+                var y = calculator.CalculateWithX(calculator.Rpn, x);
+                pointsChart.Add(new Point(x, y));
+            }
+
+            List<Point> pointsScale = [];
+
+            for (double x = start; x <= end; x += step)
+            {
+                var y = calculator.CalculateWithX(calculator.Rpn, x);
+                pointsScale.Add(new Point(x, y));
+            }
+
+            print.PlotGraph(pointsChart, pointsScale);
+        }
     }
 }
