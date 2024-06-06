@@ -8,36 +8,37 @@ namespace WpfAppRPN
 {
     static class PointExtensions
     {
-        public static Point ToMathCoordinates(this Point point, Canvas canvas, double scale)
+        public static Point ToMathCoordinates(this Point point, Canvas canvas, float scale)
         {
             return new Point(
                 (int)((point.X - canvas.ActualWidth / 2) / scale),
                 (int)((canvas.ActualHeight / 2 - point.Y) / scale));
         }
-
-        public static Point ToUiCoordinates(this Point point, Canvas canvas, double scale)
+        
+        public static Point ToUiCoordinates(this Point point, Canvas canvas, float scale)
         {
             return new Point(
                 (int)(point.X * scale + canvas.ActualWidth / 2),
                 (int)(canvas.ActualHeight / 2 - point.Y * scale)
             );
         }
+
     }
 
     class Printer
     {
         private readonly Brush _defaultStroke = Brushes.Black;
-        private readonly double _scaleLength = 5;
+        private readonly float _scaleLength = 5;
 
         private readonly Point _xAxisStart, _xAxisEnd, _yAxisStart, _yAxisEnd;
 
         private readonly Canvas _canvas;
-        private readonly double _xStart;
-        private readonly double _xEnd;
-        private readonly double _step;
-        private readonly double _scale;
+        private readonly float _xStart;
+        private readonly float _xEnd;
+        private readonly float _step;
+        private readonly float _scale;
 
-        public Printer(Canvas canvas, double xStart, double xEnd, double step, double scale)
+        public Printer(Canvas canvas, float xStart, float xEnd, float step, float scale)
         {
             _canvas = canvas;
 
@@ -61,7 +62,7 @@ namespace WpfAppRPN
             DrawYAxisSegments();
         }
 
-        private void DrawLine(Point start, Point end, Brush stroke = null, double thickness = 1)
+        private void DrawLine(Point start, Point end, Brush stroke = null, float thickness = 1)
         {
             stroke ??= _defaultStroke;
 
@@ -96,7 +97,7 @@ namespace WpfAppRPN
 
         private void DrawXAxisSegments()
         {
-            for (double x = _xStart; x <= _xEnd; x += _step)
+            for (float x = _xStart; x <= _xEnd; x += _step)
             {
                 if (x == 0) continue;
 
@@ -112,7 +113,7 @@ namespace WpfAppRPN
 
         private void DrawYAxisSegments()
         {
-            for (double y = _xStart; y <= _xEnd; y += _step)
+            for (float y = _xStart; y <= _xEnd; y += _step)
             {
                 if (y == 0) continue;
 
@@ -126,7 +127,7 @@ namespace WpfAppRPN
             }
         }
 
-        private void DrawPoint(Point point, Brush stroke = null, double thickness = 1, double size = 4)
+        private void DrawPoint(Point point, Brush stroke = null, float thickness = 1, float size = 4)
         {
             stroke ??= _defaultStroke;
 
@@ -155,7 +156,7 @@ namespace WpfAppRPN
                 FontSize = 5
             };
 
-            textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            textBlock.Measure(new Size(float.PositiveInfinity, float.PositiveInfinity));
             var textSize = textBlock.DesiredSize;
 
             if (isXAxis)
@@ -171,5 +172,6 @@ namespace WpfAppRPN
 
             _canvas.Children.Add(textBlock);
         }
+
     }
 }

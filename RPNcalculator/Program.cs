@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Security.Authentication.ExtendedProtection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
-using RPN_Logic;
+﻿using Rpn_Logic;
 
 
 
@@ -19,8 +11,9 @@ namespace LabWork
             Console.Write("Введите математическое выражение: ");
             string expression = Console.ReadLine();
             expression = expression.Replace(" ", string.Empty);
-            RPNCalculator calculator = new RPNCalculator(expression);
-            Console.WriteLine("Результат: " + calculator);
+            RpnCalculator calculator = new RpnCalculator(expression);
+            //
+            Console.WriteLine("Результат: " );
             Console.ReadKey();
         }
     }
